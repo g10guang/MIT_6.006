@@ -9,7 +9,7 @@
 
 from tools.mock_data import mock_array
 import random
-
+ 
 
 def build_max_heap(data: list):
     """
