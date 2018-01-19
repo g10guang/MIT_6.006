@@ -233,7 +233,7 @@ class MHash(ABCHash):
     def calhash(self, key):
         """
             使用 multiplication method:
-            h(k) = [(a * k) % (2 ** w] >> (w - r)
+            h(k) = [(a * k) % (2 ** w)] >> (w - r)
             其中 w 为 bit 长度
             m = 2 ** r
             r < w
@@ -283,7 +283,10 @@ def obj2int(key):
     """
     使用 pickle 转化 object 为 bytes
     """
-    b = pickle.dumps(key)
+    try:
+        b = pickle.dumps(key)
+    except RecursionError as e:
+        print(e)
     # 将 bytes 转化为十六进制的字符串
     hexi = b.hex()
     # 将十六进制的字符串转化为 int 整形
