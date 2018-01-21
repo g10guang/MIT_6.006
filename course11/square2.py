@@ -33,6 +33,23 @@ def log2(d):
     return math.log2(d)
 
 
+def square(a, d):
+    """
+    计算 根号a
+    x(i+1) = x(i) * 0.5 + a * 0.5 / x(i)
+    :param a:
+    :param d: 需要的计算精度
+    :return:
+    """
+    # 假设初始计算精度尾　1.0
+    result = 1.0
+    cal_times = int(log2(d))
+    for _ in range(cal_times):
+        result = result * 0.5 + a * 0.5 / result
+    return result
+
+
 if __name__ == '__main__':
-    result = square2(10*3)
-    print('{:.1000f}'.format(result))
+    # d = square2(10 * 3)
+    d = square(3, 10**6)
+    print('{:.1000f}'.format(d))
