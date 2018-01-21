@@ -31,6 +31,8 @@ class Vertex(object):
 class Edge(dict, abc.ABC):
     """
     用于表示图的边
+    边的表示方式
+    For a set: [('b', 1), ('c', 2)]
     """
 
     def __init__(self, **kwargs) -> None:
@@ -42,7 +44,7 @@ class Edge(dict, abc.ABC):
         :param vertex:
         :return:
         """
-        self[vertex] = set()
+        self[vertex] = list()
 
     def del_vertex(self, vertex: Vertex):
         """
@@ -52,11 +54,12 @@ class Edge(dict, abc.ABC):
         """
         del self[vertex]
         for k, v in self.items():
-            if vertex in v:
-                v.remove(vertex)
+            for pair in v:
+                if pair[0] == vertex:
+                    v.remove(pair)
 
     @abc.abstractmethod
-    def add_edge(self, x: Vertex, y: Vertex):
+    def add_edge(self, x: Vertex, y: Vertex, weight=0):
         """
         添加边关系
         :return:
@@ -75,14 +78,15 @@ class DirectEdge(Edge):
     有向图的边
     """
 
-    def add_edge(self, x: Vertex, y: Vertex):
+    def add_edge(self, x: Vertex, y: Vertex, weight=0):
         """
         x-->y 有向图只需要添加一个关系
         :param x: 起始顶点
         :param y: 终结顶点
+        :param weight: 权重
         :return:
         """
-        self[x].add(y)
+        self[x].append((y, weight))
 
 
 class UndirectEdge(Edge):
@@ -90,15 +94,16 @@ class UndirectEdge(Edge):
     无向图的边
     """
 
-    def add_edge(self, x: Vertex, y: Vertex):
+    def add_edge(self, x: Vertex, y: Vertex, weight=0):
         """
         ｘ--y 需要添加两个关系记录
+        :param weight: 权重
         :param x:
         :param y:
         :return:
         """
-        self[x].add(y)
-        self[y].add(x)
+        self[x].append((y, weight))
+        self[y].append((x, weight))
 
 
 class Graph(abc.ABC):
@@ -140,16 +145,17 @@ class Graph(abc.ABC):
         self.vertexes.remove(vertex)
         self.edges.del_vertex(vertex)
 
-    def add_edge(self, x: Vertex, y: Vertex):
+    def add_edge(self, x: Vertex, y: Vertex, weight=0):
         """
         添加边关系
+        :param weight: 权重
         :param x:
         :param y:
         :return:
         """
         if x not in self.vertexes or y not in self.vertexes:
             raise KeyError('图中添加的边关系必须两个顶点都在')
-        self.edges.add_edge(x, y)
+        self.edges.add_edge(x, y, weight)
 
     def BFS(self, s):
         """
@@ -168,7 +174,7 @@ class Graph(abc.ABC):
         while frontier:
             next_frontier = []       # 用于暂存 frontier 结果
             for u in frontier:
-                for v in self.edges[u]:
+                for v, weight in self.edges[u]:
                     if v not in level:
                         # v 还没有被遍历，如果 v 已经访问过，则不做任何操作
                         level[v] = i
@@ -198,7 +204,7 @@ class Graph(abc.ABC):
         :param parent: 用于记录 parent 关系的字典
         :return:
         """
-        for u in self.edges[s]:
+        for u, weight in self.edges[s]:
             if u not in parent:
                 # u vertex has not been visited.
                 parent[u] = s
@@ -233,7 +239,7 @@ class Graph(abc.ABC):
         :return:
         """
         has_cycle = False
-        for u in self.edges[s]:
+        for u, weight in self.edges[s]:
             if u in this_visit:
                 # last_visit is None 这一步是为了区分有向图和无向图
                 # s == u 的判断是为了预防 a--a 自成闭环
@@ -305,12 +311,12 @@ def test_undirect_graph():
     ug.add_edge(c, f)
     ug.add_edge(f, g)
     print(ug)
-    # level, parent = ug.BFS(a)
-    # print('BFS:')
-    # print('level: ', level)
-    # print('parent: ', parent)
-    # parent = ug.DFS()
-    # print(parent)
+    level, parent = ug.BFS(a)
+    print('BFS:')
+    print('level: ', level)
+    print('parent: ', parent)
+    parent = ug.DFS()
+    print(parent)
     if ug.is_cyclic():
         print('发现循环')
     else:
