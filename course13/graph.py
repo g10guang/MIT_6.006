@@ -178,6 +178,81 @@ class Graph(abc.ABC):
             i += 1
         return level, parent
 
+    def DFS(self):
+        """
+        对图进行深度优先搜索
+        :return:
+        """
+        parent = {}
+        for s in self.vertexes:
+            if s not in parent:
+                # 记录 s 没有父结点
+                parent[s] = None
+                self.DFS_visit(s, parent)
+        return parent
+
+    def DFS_visit(self, s: Vertex, parent: dict):
+        """
+        从顶点 s 开始进行深度优先搜索
+        :param s:
+        :param parent: 用于记录 parent 关系的字典
+        :return:
+        """
+        for u in self.edges[s]:
+            if u not in parent:
+                # u vertex has not been visited.
+                parent[u] = s
+                self.DFS_visit(u, parent)
+
+    def is_cyclic(self):
+        """
+        使用 DFS 判断当前图是否是循环的
+        如果在使用深度优先遍历图时，遇到有边指向已经访问过的顶点，那么判断该图为有循环的；如果遍历结束都没出现前一种情况，则判断该图没有循环
+        :return:
+        """
+        has_cycle = False
+        # visited 用于记录已经被访问过的顶点，主要用于判断根顶点是否已经访问过，避免重复访问
+        visited = set()
+        for s in self.vertexes:
+            if s not in visited:
+                visited.add(s)
+                this_visited = {s}
+                # None 代表 s 是访问树的根结点
+                if self.one_direct_visit(s, this_visited, visited):
+                    has_cycle = True
+                    break
+        return has_cycle
+
+    def one_direct_visit(self, s, this_visit: set, visited: set, last_visit: Vertex = None):
+        """
+        与 DFS_visit 的区别是传递的参数是 set 而不是 dict
+        :param s: 当前正在访问的顶点
+        :param this_visit: 本次深度优先搜索（单路径下）访问过的顶点，在不同路径中，this_visited 不相同
+        :param visited: 记录所有已经被访问过的顶点，避免重复访问
+        :param last_visit: 记录上一个访问的顶点，防止 a--b b--a 的同一条边上的循环误判
+        :return:
+        """
+        has_cycle = False
+        for u in self.edges[s]:
+            if u in this_visit:
+                # last_visit is None 这一步是为了区分有向图和无向图
+                # s == u 的判断是为了预防 a--a 自成闭环
+                if last_visit is None or last_visit != u or s == u:
+                    # 在本次DFS中已经访问过了 u，判断出现了循环
+                    return True
+            if u not in visited:
+                visited.add(u)
+                # 复制一个全新的 set，用于记录本次单路径访问已在本次单路径访问中访问过的
+                new_visit = this_visit.copy()
+                new_visit.add(u)
+                if isinstance(self, UndirectGraph):
+                    has_cycle = self.one_direct_visit(u, new_visit, visited, s)
+                elif isinstance(self, DirectGraph):
+                    has_cycle = self.one_direct_visit(u, new_visit, visited)
+                if has_cycle:
+                    return True
+        return False
+
     def __repr__(self) -> str:
         v = [repr(x) for x in self.vertexes]
         return '顶点：{}\n边：\n{}'.format(' '.join(v), repr(self.edges))
@@ -222,17 +297,24 @@ def test_undirect_graph():
     ug.add_vertex(f)
     ug.add_vertex(g)
     ug.add_edge(a, b)
+    # ug.add_edge(a, a)
     ug.add_edge(a, d)
     ug.add_edge(b, c)
     ug.add_edge(c, d)
     ug.add_edge(c, e)
     ug.add_edge(c, f)
     ug.add_edge(f, g)
-    level, parent = ug.BFS(a)
     print(ug)
-    print('BFS:')
-    print('level: ', level)
-    print('parent: ', parent)
+    # level, parent = ug.BFS(a)
+    # print('BFS:')
+    # print('level: ', level)
+    # print('parent: ', parent)
+    # parent = ug.DFS()
+    # print(parent)
+    if ug.is_cyclic():
+        print('发现循环')
+    else:
+        print('没有循环')
 
 
 def test_direct_graph():
@@ -256,7 +338,7 @@ def test_direct_graph():
     dg.add_vertex(f)
     dg.add_vertex(g)
     dg.add_edge(a, b)
-    dg.add_edge(a, d)
+    dg.add_edge(d, a)
     dg.add_edge(b, c)
     dg.add_edge(c, d)
     dg.add_edge(c, e)
@@ -264,12 +346,19 @@ def test_direct_graph():
     dg.add_edge(g, e)
     dg.add_edge(f, g)
     print(dg)
-    level, parent = dg.BFS(a)
-    print('BFS:')
-    print('level: ', level)
-    print('parent: ', parent)
+    # level, parent = dg.BFS(a)
+    # print('BFS:')
+    # print('level: ', level)
+    # print('parent: ', parent)
+    # parent = dg.DFS()
+    # print(parent)
+    has_cycle = dg.is_cyclic()
+    if has_cycle:
+        print('发现循环')
+    else:
+        print('没有循环')
 
 
 if __name__ == '__main__':
-    test_direct_graph()
+    test_undirect_graph()
 
