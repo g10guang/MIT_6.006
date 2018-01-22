@@ -3,6 +3,7 @@
 # author: Xiguang Liu<g10guang@foxmail.com>
 # 2018-01-21 10:06
 # 创建图类，使用邻接链表表示图之间的边关系
+import sys
 
 from course8.abchash import obj2int
 import abc
@@ -57,6 +58,20 @@ class Edge(dict, abc.ABC):
             for pair in v:
                 if pair[0] == vertex:
                     v.remove(pair)
+        # 因为不在图中，返回 python 能够表达的最大 int
+        return sys.maxsize
+
+    def get_edge_weight(self, x: Vertex, y: Vertex):
+        """
+        计算图中两个顶点的距离
+        :param x:
+        :param y:
+        :return:
+        """
+        for v, weight in self[x]:
+            if v == y:
+                return weight
+        return sys.maxsize
 
     @abc.abstractmethod
     def add_edge(self, x: Vertex, y: Vertex, weight=0):
@@ -156,6 +171,15 @@ class Graph(abc.ABC):
         if x not in self.vertexes or y not in self.vertexes:
             raise KeyError('图中添加的边关系必须两个顶点都在')
         self.edges.add_edge(x, y, weight)
+
+    def get_edge_weight(self, x: Vertex, y: Vertex):
+        """
+        寻找图中两个顶点的权重
+        :param x:
+        :param y:
+        :return:
+        """
+        return self.edges.get_edge_weight(x, y)
 
     def BFS(self, s):
         """
@@ -258,6 +282,14 @@ class Graph(abc.ABC):
                 if has_cycle:
                     return True
         return False
+
+    def has_vertex(self, vertex: Vertex):
+        """
+        判断该顶点是否在图中
+        :param vertex:
+        :return:
+        """
+        return vertex in self.vertexes
 
     def __repr__(self) -> str:
         v = [repr(x) for x in self.vertexes]
