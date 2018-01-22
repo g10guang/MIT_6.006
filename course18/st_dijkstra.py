@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 # coding=utf-8
 # author: Xiguang Liu<g10guang@foxmail.com>
-# 2018-01-21 18:47
-# 使用 Dijkstra 算法求原点 s 到图中其他顶点的最小路径长度，以及输出对应的路径
-# Dijkstra 适用于有向无环图，如果有向图中存在 negative cycle 那么，Dijkstra 无法得出正确的结果
+# 2018-01-22 20:02
+# 如果在图中需要搜索的目标是 single-source s and single-target t，那么可以对 Dijkstra 算法进行优化
+# 如果新加入 S 的顶点为 t，那么可以停止搜索
+
+
 import sys
 
 from course13.graph import DirectGraph, Vertex
 
 
-def dijkstra(dg: DirectGraph, s: Vertex):
+def dijkstra_single_source_single_target(dg: DirectGraph, s: Vertex, t: Vertex):
     """
     使用 Dijkstra 遍历有向无环图，假设该图为有向无环图 DAG，以下代码不做判断
+    寻找 DAG 中 s-->t 的最短路径
     :param dg: course13.graph.DirectGraph
     :param s: 寻找DAG中所有顶点到 s 的最短路径 S.P
+    :param t: 目标顶点
     :return:
     """
     if not dg.has_vertex(s):
@@ -27,12 +31,18 @@ def dijkstra(dg: DirectGraph, s: Vertex):
     while Q:
         # extract-min from Q
         v, minimize = extract_min(Q, d)
+        # 如果 v == t 那么可以停止搜索，已经找到了目标 s-->t 最短路径
+        if v == t:
+            S.add(v)
+            Q.remove(v)
+            break
         if v is not None:
             S.add(v)
             Q.remove(v)
             relax(dg, d, pai, v)
         else:
             # 所有可以被 S 达到的顶点都已经被遍历，剩下的顶点无法从 s 到达
+            # 有可能 s-x->t 不存在这样的路径，也就是 d[t] = sys.maxsize
             break
     return d, pai
 
@@ -56,7 +66,6 @@ def initialize(dg: DirectGraph, s):
         if v != s:
             Q.add(v)
             d[v] = dg.get_edge_weight(s, v)
-            # 如果是 d[v] = sys.maxsize 则证明 s-x->t 不存在这样的路径
             if d[v] < sys.maxsize:
                 pai[v] = s
     return S, Q, d, pai
@@ -97,7 +106,35 @@ def relax(dg: DirectGraph, d: dict, pai: dict, v: Vertex):
             pai[x] = v
 
 
-def test_dijkstra():
+def print_shortest_path(pai: dict, s: Vertex, t: Vertex):
+    """
+    在控制台输出最短路径
+    :param pai: 记录这每个顶点的上一个访问顶点
+    :param s: 源点 source
+    :param t: 目标 target
+    :return:
+    """
+    if not pai[t]:
+        # 不存在路径 s-->t
+        print('path from {s} to {t} is not exist'.format(s=repr(s), t=repr(t)))
+    else:
+        print_path(pai, t)
+        print(t)
+
+
+def print_path(pai: dict, v: Vertex):
+    """
+    递归调用打印输出路径
+    :param pai:
+    :param v:
+    :return:
+    """
+    if pai[v]:
+        print_path(pai, pai[v])
+        print(pai[v], end='-->')
+
+
+def test_dijkstra_single_source_single_target():
     dg = DirectGraph()
     a = Vertex('a')
     b = Vertex('b')
@@ -124,9 +161,13 @@ def test_dijkstra():
     dg.add_edge(b, e, 2)
     dg.add_edge(e, g, 3)
 
-    d, pai = dijkstra(dg, a)
+    s, t = a, g
+
+    d, pai = dijkstra_single_source_single_target(dg, s, t)
     print(d, pai)
+    print('=======')
+    print_shortest_path(pai, s, t)
 
 
 if __name__ == '__main__':
-    test_dijkstra()
+    test_dijkstra_single_source_single_target()
