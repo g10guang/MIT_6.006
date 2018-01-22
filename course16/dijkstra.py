@@ -52,9 +52,11 @@ def initialize(dg: DirectGraph, s):
     pai = {s: None}
     # 将所有非 s 顶点加入到 Q 中
     for v in dg.vertexes:
+        pai[v] = None
         if v != s:
             Q.add(v)
             d[v] = dg.get_edge_weight(s, v)
+            pai[v] = s
     return S, Q, d, pai
 
 

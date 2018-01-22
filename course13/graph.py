@@ -283,6 +283,13 @@ class Graph(abc.ABC):
                     return True
         return False
 
+    def get_vertex_num(self):
+        """
+        获得图中的顶点数量
+        :return:
+        """
+        return len(self.vertexes)
+
     def has_vertex(self, vertex: Vertex):
         """
         判断该顶点是否在图中
